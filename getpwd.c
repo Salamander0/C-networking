@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
                     }
                     else break;
                 }
+                optind = index-1;
                 break;
             case 'u':
                 index = optind-1;
@@ -59,6 +60,7 @@ int main(int argc, char *argv[])
                     }
                     else break;
                 }
+                optind = index-1;
                 break;
             case 'L':
                 nflag++;                            /* get name from passwd */
@@ -86,6 +88,8 @@ int main(int argc, char *argv[])
                 break;
         }
     }
+    
+    printf("%zd,%zd,%zd,%zd,%zd,%zd",nflag,uflag,gflag,aflag,hflag,sflag);
     
     bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
     if (bufsize == -1)                              /* Value was indeterminate */
