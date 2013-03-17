@@ -28,9 +28,9 @@ int main(int argc, char *argv[])
     struct passwd *result;
     char *buf, *opts = "l:u:LUGNHS";
     size_t bufsize;
-    int s, c, optind = 2;
+    int s, c, index;
     size_t nflag=0,uflag=0,gflag=0,aflag=0,hflag=0,sflag=0,lcount=0,ucount=0;
-    extern int optopt;
+    extern int optopt, optind;
     char *login[MAX], *uid[MAX], *next;
     
     if (argc < 3){
@@ -38,34 +38,32 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
     
-    while((c = getopt(argc, argv, opts)) != -1){
+    while((c = getopt(argc, argv, opts)) != EOF){
         switch(c){
             case 'l':
-                while(optind < argc){
-                    next = strdup(argv[optind]);    /* get login */
-                    optind++;                       
+                index = optind-1;
+                while(index < argc){
+                    next = strdup(argv[index]);    /* get login */
+                    index++;
                     if(next[0] == '-'){             /* check if optarg isn't next switch */
-                        optind--;
                         break;
                     }
                     else{
-                        lcount++;
-                        login[lcount-1] = next;    
+                        login[lcount++] = next;
                         //printf("login: %s\n", login[lcount-1]);
                     }
                 }
                 break;
             case 'u':
-                while(optind < argc){
-                    next = strdup(argv[optind]);    /* get uid */
-                    optind++;
+                index = optind-1;
+                while(index < argc){
+                    next = strdup(argv[index]);    /* get uid */
+                    index++;
                     if(next[0] == '-'){             /* check if optarg isn't next switch */
-                        optind--;
                         break;
                     }
                     else{
-                        ucount++;
-                        uid[ucount-1] = next;
+                        uid[ucount++] = next;
                         //printf("uid: %s\n", uid[ucount-1]);
                     }
                 }
@@ -111,14 +109,15 @@ int main(int argc, char *argv[])
     for(int i=0; i<lcount; i++){
         s = getpwnam_r(login[i], &pwd, buf, bufsize, &result);
         if (result == NULL) {
-            if (s == 0)
+            if (s == 0){
                 fprintf(stderr,"Chyba: neznamy login %s\n", login[i]);
+            }
             else {
                 fprintf(stderr,"Chyba getpwnam_r\n");
+                exit(EXIT_FAILURE);
             }
-            exit(EXIT_FAILURE);
         }
-        printf("Name: %s; UID: %ld\n", pwd.pw_gecos, (long) pwd.pw_uid);
+        else printf("Name: %s; UID: %ld\n", pwd.pw_gecos, (long) pwd.pw_uid);
     }
     }
     
