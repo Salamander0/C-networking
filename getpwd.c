@@ -26,32 +26,27 @@ int main(int argc, char *argv[])
 {
     struct passwd pwd;
     struct passwd *result;
-    char *buf, *opts = "l:u:LUGNHS";
-    size_t bufsize;
+    char *buf, *opts = "l:u:LUGNHS", *login[MAX], *uid[MAX], *next;
     int s, c, index;
-    size_t nflag=0,uflag=0,gflag=0,aflag=0,hflag=0,sflag=0,lcount=0,ucount=0;
+    size_t nflag=0,uflag=0,gflag=0,aflag=0,hflag=0,sflag=0,lcount=0,ucount=0, bufsize;
     extern int optopt, optind;
-    char *login[MAX], *uid[MAX], *next;
     
     if (argc < 3){
 		fprintf(stderr,"%s\n",HELPFILE);
 		exit(EXIT_FAILURE);
 	}
     
-    while((c = getopt(argc, argv, opts)) != EOF){
+    while((c = getopt(argc, argv, opts)) != -1){
         switch(c){
             case 'l':
                 index = optind-1;
                 while(index < argc){
                     next = strdup(argv[index]);    /* get login */
                     index++;
-                    if(next[0] == '-'){             /* check if optarg isn't next switch */
-                        break;
-                    }
-                    else{
+                    if(next[0] != '-'){             /* check if optarg isn't next switch */
                         login[lcount++] = next;
-                        //printf("login: %s\n", login[lcount-1]);
                     }
+                    else break;
                 }
                 break;
             case 'u':
@@ -59,13 +54,10 @@ int main(int argc, char *argv[])
                 while(index < argc){
                     next = strdup(argv[index]);    /* get uid */
                     index++;
-                    if(next[0] == '-'){             /* check if optarg isn't next switch */
-                        break;
-                    }
-                    else{
+                    if(next[0] != '-'){             /* check if optarg isn't next switch */
                         uid[ucount++] = next;
-                        //printf("uid: %s\n", uid[ucount-1]);
                     }
+                    else break;
                 }
                 break;
             case 'L':
@@ -91,6 +83,7 @@ int main(int argc, char *argv[])
                 break;
             case '?':                               /* error - unknown option */
                 fprintf(stderr,"Unrecognized option: -%c\n", optopt);
+                break;
         }
     }
     
