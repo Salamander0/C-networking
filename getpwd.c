@@ -1,3 +1,18 @@
+/*
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +25,7 @@ const char *HELPFILE =
 "*\n"
 "* Program:  getpwd.c\n"
 "* Date:   17.3.2012\n"
-"* Author:   \n"
+"* Author:  Salamander\n"
 "* Usage:\n"
 "* getpwd -l USER(s) -u UID(s) -L -U -G -N -H -S\n"
 "* -L       return username\n"
@@ -24,11 +39,11 @@ const char *HELPFILE =
 
 int main(int argc, char *argv[])
 {
-    struct passwd pwd;
-    struct passwd *result;
-    char *buf, *opts = "l:u:LUGNHS", *login[MAX], *uid[MAX], *next;
+    struct passwd pwd, *result;
+    char *buf, *opts = "l:u:LUGNHS", *login[MAX], *next;
     int s, c, index;
-    size_t nflag=0,uflag=0,gflag=0,aflag=0,hflag=0,sflag=0,lcount=0,ucount=0, bufsize;
+    unsigned int uid[MAX];
+    size_t nflag=0, uflag=0, gflag=0, aflag=0, hflag=0, sflag=0, lcount=0, ucount=0, bufsize, written=0;
     extern int optopt, optind;
     
     if (argc < 3){
@@ -56,11 +71,11 @@ int main(int argc, char *argv[])
                     next = strdup(argv[index]);    /* get uid */
                     index++;
                     if(next[0] != '-'){             /* check if optarg isn't next switch */
-                        uid[ucount++] = next;
+                        uid[ucount++] = atoi(next);
                     }
                     else break;
                 }
-                optind = index-1;
+                optind = index-1;                           /* set optind to correct value */
                 break;
             case 'L':
                 nflag++;                            /* get name from passwd */
@@ -89,10 +104,10 @@ int main(int argc, char *argv[])
         }
     }
     
-    printf("%zd,%zd,%zd,%zd,%zd,%zd",nflag,uflag,gflag,aflag,hflag,sflag);
+    //printf("%zd,%zd,%zd,%zd,%zd,%zd, argc: %d\n",nflag,uflag,gflag,aflag,hflag,sflag, argc);
     
     bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
-    if (bufsize == -1)                              /* Value was indeterminate */
+    if ((int)bufsize == -1)                              /* Value was indeterminate */
         bufsize = 16384;                            /* Should be more than enough */
     
     buf = malloc(bufsize);
@@ -103,30 +118,82 @@ int main(int argc, char *argv[])
     
     /* Print out results for all logins */
     if(lcount > 0){
-    for(int i=0; i<lcount; i++){
-        s = getpwnam_r(login[i], &pwd, buf, bufsize, &result);
-        if (result == NULL) {
-            if (s == 0){
-                fprintf(stderr,"Chyba: neznamy login %s\n", login[i]);
+        for(unsigned int i=0; i<lcount; i++){
+            s = getpwnam_r(login[i], &pwd, buf, bufsize, &result);
+            if (result == NULL) {
+                if (s == 0){
+                    fprintf(stderr,"Chyba: neznamy login %s\n", login[i]);
+                }
+                else {
+                    fprintf(stderr,"Chyba getpwnam_r\n");
+                    exit(EXIT_FAILURE);
+                }
             }
             else {
-                fprintf(stderr,"Chyba getpwnam_r\n");
-                exit(EXIT_FAILURE);
+                if(nflag){fprintf(stdout,"%s",pwd.pw_name); written++;}
+                if(uflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%zd",(ssize_t)pwd.pw_uid); written++;
+                }
+                if(gflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%zd",(ssize_t)pwd.pw_gid); written++;
+                }
+                if(aflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%s",pwd.pw_gecos); written++;
+                }
+                if(hflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%s",pwd.pw_dir); written++;
+                }
+                if(sflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%s",pwd.pw_shell);}
+                fprintf(stdout,"\n");
             }
         }
-        else printf("Name: %s; UID: %ld\n", pwd.pw_gecos, (long) pwd.pw_uid);
-    }
     }
     
     /* Print out results for all UIDs */
     if(ucount > 0){
-        for(int i=0; i<ucount; i++){
-            
+        for(unsigned int i=0; i<ucount; i++){
+            s = getpwuid_r(uid[i], &pwd, buf, bufsize, &result);
+            if(result == NULL){
+                if (s == 0){
+                    fprintf(stderr,"Chyba: nezname UID %zd\n", (ssize_t)uid[i]);
+                }
+                else {
+                    fprintf(stderr,"Chyba getpwuid_r\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            else {
+                if(nflag){fprintf(stdout,"%s",pwd.pw_name); written++;}
+                if(uflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%zd",(ssize_t)pwd.pw_uid); written++;
+                }
+                if(gflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%zd",(ssize_t)pwd.pw_gid); written++;
+                }
+                if(aflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%s",pwd.pw_gecos); written++;
+                }
+                if(hflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%s",pwd.pw_dir); written++;
+                }
+                if(sflag){
+                    if(written){fprintf(stdout,", "); written=0;}
+                    fprintf(stdout,"%s",pwd.pw_shell);}
+                fprintf(stdout,"\n");
+            }
         }
-        
     }
-    
-    
+  
     free(buf);
     exit(EXIT_SUCCESS);
 }
