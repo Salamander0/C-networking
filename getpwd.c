@@ -40,7 +40,7 @@ const char *HELPFILE =
 int main(int argc, char *argv[])
 {
     struct passwd pwd, *result;
-    char *buf, *opts = "l:u:LUGNHS", *login[MAX], *next;
+    char *buf, *optstring = "l:u:LUGNHS", *login[MAX], *next;
     int s, c, index;
     unsigned int uid[MAX];
     size_t nflag=0, uflag=0, gflag=0, aflag=0, hflag=0, sflag=0, lcount=0, ucount=0, bufsize, written=0;
@@ -48,10 +48,10 @@ int main(int argc, char *argv[])
     
     if (argc < 3){
 		fprintf(stderr,"%s\n",HELPFILE);
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
     
-    while((c = getopt(argc, argv, opts)) != -1){
+    while((c = getopt(argc, argv, optstring)) != -1){
         switch(c){
             case 'l':
                 index = optind-1;
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
     buf = malloc(bufsize);
     if (buf == NULL) {
         fprintf(stderr,"Buffer malloc error\n");
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     
     /* Print out results for all logins */
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
                 }
                 else {
                     fprintf(stderr,"Chyba getpwnam_r\n");
-                    exit(EXIT_FAILURE);
+                    return EXIT_FAILURE;
                 }
             }
             else {
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
                 }
                 else {
                     fprintf(stderr,"Chyba getpwuid_r\n");
-                    exit(EXIT_FAILURE);
+                    return EXIT_FAILURE;
                 }
             }
             else {
@@ -195,5 +195,5 @@ int main(int argc, char *argv[])
     }
   
     free(buf);
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
 }
