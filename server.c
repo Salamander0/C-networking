@@ -49,7 +49,7 @@ int main(int argc, char * argv[])
 {
     int c, rc, port=0;
     int welcome_socket;                             /* socket used to listen for incoming connections */
-    char *optstring = "p:", MSG[100];
+    char *optstring = "p:", MSG[100] = "";
     struct sockaddr_in6 sa;                         /* socket info about our server */
     struct sockaddr_in6 sa_client;                  /* socket info about client connecting to serv */
     char str[INET6_ADDRSTRLEN];
@@ -133,18 +133,18 @@ int main(int argc, char * argv[])
                     perror("error on read");
                     return EXIT_FAILURE;
                 }
-            
+                printf("%s\n", MSG);                                        /* print received mesaage */
+                //do something with message
+                if(send(comm_socket, MSG, sizeof(MSG), 0) <0){
+                    perror("error on write");
+                    return EXIT_FAILURE;
+                }
+                close(comm_socket);
+                exit(EXIT_SUCCESS);
             }
-            printf("%s\n", MSG);
-           // execve("/getpwd", "-l salamander -L -U -G -N -H -S", NULL);
-            close(comm_socket);
-            exit(EXIT_SUCCESS);
-        }
-        else{
-            close(comm_socket);
+            else close(comm_socket);
         }
     }
-    
     return EXIT_SUCCESS;
 }
 
