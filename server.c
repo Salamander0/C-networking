@@ -42,7 +42,7 @@ void *SigCatcher(int n){
     struct rusage usage;
     
 	int pid = wait3(&status, WNOHANG, &usage);
-    printf("exit code for %d is %d\n", pid, status);
+    printf("exit code for %d is %d\n", pid, status);    /* prints out exit code for the child process */
 }
 
 int main(int argc, char * argv[])
