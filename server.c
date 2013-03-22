@@ -19,6 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -41,7 +42,6 @@ void *SigCatcher(int n){
     struct rusage usage;
     
 	int pid = wait3(&status, WNOHANG, &usage);
-    
     printf("exit code for %d is %d\n", pid, status);
 }
 
@@ -49,7 +49,7 @@ int main(int argc, char * argv[])
 {
     int c, rc, port=0;
     int welcome_socket;                             /* socket used to listen for incoming connections */
-    char *optstring = "p:", MSG[128];
+    char *optstring = "p:", MSG[100];
     struct sockaddr_in6 sa;                         /* socket info about our server */
     struct sockaddr_in6 sa_client;                  /* socket info about client connecting to serv */
     char str[INET6_ADDRSTRLEN];
@@ -101,34 +101,47 @@ int main(int argc, char * argv[])
     }
     
     /* start listening, allowing a queue of up to 1 pending connection */
-    if ((rc = listen(welcome_socket, 1)) < 0)
-	{
+    if ((rc = listen(welcome_socket, 1)) < 0){
 		perror("listen() failed");
 		return EXIT_FAILURE;
 	}
     
     signal(SIGCHLD, SigCatcher);
     
-    for(;;){
+    while(1){
         int comm_socket = accept(welcome_socket, (struct sockaddr*)&sa_client, &sa_client_len);
-        if(comm_socket <= 0)
-            continue;
-        
-        int pid = fork();
-        if(pid < 0){
-            perror("fork() failed");
-            return EXIT_FAILURE;
-        }
-        
-        if(pid == 0){                                               /* new process to handle clients requests */
-            int chld_pid = getpid();
-            close(welcome_socket);                                  /* not needed anymore */
-            if(inet_ntop(AF_INET6, &sa_client.sin6_addr, str, sizeof(str))){}
-            if(recv(comm_socket, MSG, sizeof(MSG), 0)){             /* read message from client */
-                perror("error on read");
+        if (comm_socket > 0){
+            int pid = fork();
+            if(pid < 0){
+                perror("fork() failed");
                 return EXIT_FAILURE;
             }
+            if(pid == 0){                                                   /* new process to handle clients requests */
+                int chld_pid = getpid();
+                close(welcome_socket);                                      /* not needed anymore */
+                //printf("New connection (maintained by %d):\n",chld_pid);
+                
+                int flags = fcntl(comm_socket, F_GETFL, 0);
+                rc = fcntl(comm_socket, F_SETFL, flags | O_NONBLOCK);
+                if (rc < 0){
+                    perror("fcntl() failed");
+                    exit(EXIT_FAILURE);								
+                }
+                
+                if(inet_ntop(AF_INET6, &sa_client.sin6_addr, str, sizeof(str))){}
+                if(recv(comm_socket, MSG, sizeof(MSG), 0) <0){              /* read message from client */
+                    perror("error on read");
+                    return EXIT_FAILURE;
+                }
             
+            }
+            printf("%s\n", MSG);
+           // execve("/getpwd", "-l salamander -L -U -G -N -H -S", NULL);
+            close(comm_socket);
+            exit(EXIT_SUCCESS);
+        }
+        else{
+            close(comm_socket);
         }
     }
     
