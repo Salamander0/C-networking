@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
             case 'l':
                 index = optind-1;
                 while(index < argc){
-                    next = strdup(argv[index]);    /* get login */
+                    next = strdup(argv[index]);    /* get logins */
                     index++;
                     if(next[0] != '-'){             /* check if optarg isn't next switch */
                         login[lcount++] = next;
@@ -68,14 +68,14 @@ int main(int argc, char *argv[])
             case 'u':
                 index = optind-1;
                 while(index < argc){
-                    next = strdup(argv[index]);    /* get uid */
+                    next = strdup(argv[index]);    /* get uids */
                     index++;
                     if(next[0] != '-'){             /* check if optarg isn't next switch */
                         uid[ucount++] = atoi(next);
                     }
                     else break;
                 }
-                optind = index-1;                           /* set optind to correct value */
+                optind = index-1;                   /* set optind to correct value */
                 break;
             case 'L':
                 nflag++;                            /* get name from passwd */
@@ -104,16 +104,14 @@ int main(int argc, char *argv[])
         }
     }
     
-    //printf("%zd,%zd,%zd,%zd,%zd,%zd, argc: %d\n",nflag,uflag,gflag,aflag,hflag,sflag, argc);
-    
     if((lcount == 0) && (ucount == 0)){
-        fprintf(stderr, "No UID or users entered.\n");
+        fprintf(stderr, "No UID or users entered.\n");   /* nothing to do -> exit */
         return EXIT_FAILURE;
     }
     
     bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
     if ((int)bufsize == -1)                              /* Value was indeterminate */
-        bufsize = 16384;                            /* Should be more than enough */
+        bufsize = 16384;                                /* Should be more than enough */
     
     buf = malloc(bufsize);
     if (buf == NULL) {
@@ -124,13 +122,13 @@ int main(int argc, char *argv[])
     /* Print out results for all logins */
     if(lcount > 0){
         for(unsigned int i=0; i<lcount; i++){
-            s = getpwnam_r(login[i], &pwd, buf, bufsize, &result);
+            s = getpwnam_r(login[i], &pwd, buf, bufsize, &result);              /* get user data from /etc/passwd */
             if (result == NULL) {
                 if (s == 0){
-                    fprintf(stderr,"Chyba: neznamy login %s\n", login[i]);
+                    fprintf(stderr,"Chyba: neznamy login %s\n", login[i]);      /* set correct error code ! */
                 }
                 else {
-                    fprintf(stderr,"Chyba getpwnam_r\n");
+                    fprintf(stderr,"Chyba getpwnam_r\n");                       /* set correct error code ! */
                     return EXIT_FAILURE;
                 }
             }
@@ -163,13 +161,13 @@ int main(int argc, char *argv[])
     /* Print out results for all UIDs */
     if(ucount > 0){
         for(unsigned int i=0; i<ucount; i++){
-            s = getpwuid_r(uid[i], &pwd, buf, bufsize, &result);
+            s = getpwuid_r(uid[i], &pwd, buf, bufsize, &result);                    /* get user data from /etc/passwd */
             if(result == NULL){
                 if (s == 0){
-                    fprintf(stdout,"Chyba: nezname UID %zd\n", (ssize_t)uid[i]);
+                    fprintf(stdout,"Chyba: nezname UID %zd\n", (ssize_t)uid[i]);    /* set correct error code ! */
                 }
                 else {
-                    fprintf(stderr,"Chyba getpwuid_r\n");
+                    fprintf(stderr,"Chyba getpwuid_r\n");                           /* set correct error code ! */
                     return EXIT_FAILURE;
                 }
             }

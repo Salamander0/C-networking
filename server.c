@@ -37,11 +37,10 @@ const char *HELPFILE =
 "* server -p PORT\n"
 "*\n";
 
-void *SigCatcher(int n){
+void * SigCatcher(int n){
     int status;
     struct rusage usage;
-	int pid = wait3(&status, WNOHANG, &usage);
-    //printf("exit code for %d is %d\n", pid, status);    /* prints out exit code for the child process */
+	wait3(&status, WNOHANG, &usage);
 }
 
 int main(int argc, char * argv[])
@@ -53,6 +52,8 @@ int main(int argc, char * argv[])
     struct sockaddr_in6 sa_client;                  /* socket info about client connecting to serv */
     char str[INET6_ADDRSTRLEN];
     
+    
+    /* command line arguments */
     if(argc < 3){
         fprintf(stderr,"%s", HELPFILE);
     }
@@ -77,15 +78,14 @@ int main(int argc, char * argv[])
                 }
         }
     }
+    
     if(port <= 0){
-        printf("%s", HELPFILE);
+        printf("%s", HELPFILE);  /* wrong port number */
         return EXIT_FAILURE;
     }
     
-    if (getcwd(command, sizeof(command)) == NULL) perror("getcwd() error");
+    if (getcwd(command, sizeof(command)) == NULL) perror("getcwd() error"); /* get current working directory for popen to work correctly */
     strcat(command, "/getpwd ");
-    
-    //fprintf(stdout, "Command: %s\n", command);
 
     socklen_t sa_client_len=sizeof(sa_client);
     if((welcome_socket = socket(PF_INET6, SOCK_STREAM, 0)) < 0){
@@ -110,23 +110,21 @@ int main(int argc, char * argv[])
 		return EXIT_FAILURE;
 	}
     
-    signal(SIGCHLD, SigCatcher);
+    signal(SIGCHLD, SigCatcher);        /* catch child process */
     
     while(1){
-        int comm_socket = accept(welcome_socket, (struct sockaddr*)&sa_client, &sa_client_len);
+        int comm_socket = accept(welcome_socket, (struct sockaddr*)&sa_client, &sa_client_len);     /* accept connections */
         if (comm_socket > 0){
             int pid = fork();
             if(pid < 0){
                 perror("fork() failed");
                 return EXIT_FAILURE;
             }
-            if(pid == 0){                                                   /* new process to handle clients requests */
-                //int chld_pid = getpid();
+            /* new process to handle clients requests */
+            if(pid == 0){                                                   
                 close(welcome_socket);                                      /* not needed anymore */
-                //printf("New connection (maintained by %d):\n",chld_pid);
-                
                 int flags = fcntl(comm_socket, F_GETFL, 0);
-                rc = fcntl(comm_socket, F_SETFL, flags | O_NONBLOCK);
+                rc = fcntl(comm_socket, F_SETFL, flags | O_NONBLOCK);       /* set to non-block (not really needed) */
                 if (rc < 0){
                     perror("fcntl() failed");
                     exit(EXIT_FAILURE);								
@@ -140,16 +138,15 @@ int main(int argc, char * argv[])
                 
                     strcat(command, MSG);
                     FILE *fp;
-                    fp = popen(command, "r");
+                    fp = popen(command, "r");                               /* call the getpwd utility */
                     if (fp == NULL) {
                         printf("Failed to run command\n" );
                         return EXIT_FAILURE;
                     }
-                    /* Read the output */
-                    fgets(MSG, sizeof(MSG), fp);
+                    fgets(MSG, sizeof(MSG), fp);                            /* read standard output to MSG (100 characters limit) */
                     pclose(fp);
                 
-                    fprintf(stdout,"%s", MSG);
+                    /* send mesasage back to client */
                     if(send(comm_socket, MSG, sizeof(MSG), 0) <0){
                         perror("error on write");
                         return EXIT_FAILURE;

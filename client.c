@@ -43,19 +43,21 @@ const char *HELPFILE =
 "* -S       return login shell\n"
 "*\n";
 
+/* function which handles connection to server */
 int connection(int port, char *server, char *params)
 {
     int s, n;
     char recvd[100]="";
-    struct sockaddr_in sin; struct hostent *hptr;
+    struct sockaddr_in sin;
+    struct hostent *hptr;
     
     if(port <= 0){
-        printf("%s", HELPFILE);
+        printf("%s", HELPFILE);                         /* wrong port number */
         return EXIT_FAILURE;
     }
     
     if((s = socket(PF_INET, SOCK_STREAM, 0)) < 0){
-        perror("error on socket");
+        perror("error on socket");                      /* error while opening socket */
         return EXIT_FAILURE;
     }
     
@@ -73,13 +75,13 @@ int connection(int port, char *server, char *params)
         return EXIT_FAILURE;
     }
     
-    //odeslani adresy domeny na server
+    /* sending message to server */
     if(write(s, params, strlen(params) +1) < 0 ) {
         perror("error on write");
         return EXIT_FAILURE;
     }
     
-    //prijem zpravy ze serveru
+    /* receiving message */
     if((n = (int)read(s, recvd, sizeof(recvd) ) ) <0) {  /* read message from server */
         perror("error on read");
         return EXIT_FAILURE;
@@ -87,7 +89,7 @@ int connection(int port, char *server, char *params)
     
     printf ("%s", recvd);  /* print message to screen */
     
-	//uzavreni spojeni
+	/* close connection */
     if(close(s) < 0) {
         perror("error on close");
         return EXIT_FAILURE;
@@ -103,7 +105,7 @@ int main (int argc, char **argv)
     unsigned int uid[MAX];
     size_t lcount=0, ucount=0, pflag=0, cflag=0;
     
-	//argumenty prikazove radky
+    /* get command line params */ 
 	if (argc < 3){
 		fprintf(stdout,"%s\n",HELPFILE);
 		return EXIT_FAILURE;
@@ -112,15 +114,15 @@ int main (int argc, char **argv)
     while((c = getopt(argc, argv, optstring)) != -1){
         switch(c){
             case 'h':
-                server = strdup(optarg);
-                if(server == NULL){
+                server = strdup(optarg);                       /* hostname */
+                if(server == NULL){             
                     fprintf(stderr, "Server string mismatch");
                     exit(EXIT_FAILURE);
                 }
                 else cflag++;
                 break;
             case 'p':
-                port = atoi(optarg);
+                port = atoi(optarg);                            /* port number */
                 if(port <= 0){
                     fprintf(stderr, "Port number mismatch");
                     exit(EXIT_FAILURE);
@@ -130,7 +132,7 @@ int main (int argc, char **argv)
             case 'l':
                 index = optind-1;
                 while(index < argc){
-                    next = strdup(argv[index]);    /* get login */
+                    next = strdup(argv[index]);    /* get logins */
                     index++;
                     if(next[0] != '-'){             /* check if optarg isn't next switch */
                         login[lcount++] = next;
@@ -142,7 +144,7 @@ int main (int argc, char **argv)
             case 'u':
                 index = optind-1;
                 while(index < argc){
-                    next = strdup(argv[index]);    /* get uid */
+                    next = strdup(argv[index]);    /* get uids */
                     index++;
                     if(next[0] != '-'){             /* check if optarg isn't next switch */
                         uid[ucount++] = atoi(next);
@@ -188,7 +190,7 @@ int main (int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    
+    /* get login info from server one by one */
     if(lcount > 0){
         for(unsigned int i=0; i<lcount; i++){
             strcpy(params, "-l ");
@@ -198,6 +200,7 @@ int main (int argc, char **argv)
         }
     }
     
+    /* get uid info from server one by one */
     if(ucount > 0){
         for(unsigned int i=0; i<ucount; i++){
             strcpy(params, "-u ");
