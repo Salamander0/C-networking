@@ -11,7 +11,7 @@
  
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+*/
 
 
 #include <stdio.h>
@@ -40,16 +40,15 @@ const char *HELPFILE =
 void *SigCatcher(int n){
     int status;
     struct rusage usage;
-    
 	int pid = wait3(&status, WNOHANG, &usage);
-    printf("exit code for %d is %d\n", pid, status);    /* prints out exit code for the child process */
+    //printf("exit code for %d is %d\n", pid, status);    /* prints out exit code for the child process */
 }
 
 int main(int argc, char * argv[])
 {
     int c, rc, port=0;
     int welcome_socket;                             /* socket used to listen for incoming connections */
-    char *optstring = "p:", MSG[100] = "";
+    char *optstring = "p:", MSG[100] = "", command[1024] = "";
     struct sockaddr_in6 sa;                         /* socket info about our server */
     struct sockaddr_in6 sa_client;                  /* socket info about client connecting to serv */
     char str[INET6_ADDRSTRLEN];
@@ -82,6 +81,11 @@ int main(int argc, char * argv[])
         printf("%s", HELPFILE);
         return EXIT_FAILURE;
     }
+    
+    if (getcwd(command, sizeof(command)) == NULL) perror("getcwd() error");
+    strcat(command, "/getpwd ");
+    
+    //fprintf(stdout, "Command: %s\n", command);
 
     socklen_t sa_client_len=sizeof(sa_client);
     if((welcome_socket = socket(PF_INET6, SOCK_STREAM, 0)) < 0){
@@ -117,7 +121,7 @@ int main(int argc, char * argv[])
                 return EXIT_FAILURE;
             }
             if(pid == 0){                                                   /* new process to handle clients requests */
-                int chld_pid = getpid();
+                //int chld_pid = getpid();
                 close(welcome_socket);                                      /* not needed anymore */
                 //printf("New connection (maintained by %d):\n",chld_pid);
                 
@@ -133,12 +137,24 @@ int main(int argc, char * argv[])
                     perror("error on read");
                     return EXIT_FAILURE;
                 }
-                printf("%s\n", MSG);                                        /* print received mesaage */
-                //do something with message
-                if(send(comm_socket, MSG, sizeof(MSG), 0) <0){
-                    perror("error on write");
-                    return EXIT_FAILURE;
-                }
+                
+                    strcat(command, MSG);
+                    FILE *fp;
+                    fp = popen(command, "r");
+                    if (fp == NULL) {
+                        printf("Failed to run command\n" );
+                        return EXIT_FAILURE;
+                    }
+                    /* Read the output */
+                    fgets(MSG, sizeof(MSG), fp);
+                    pclose(fp);
+                
+                    fprintf(stdout,"%s", MSG);
+                    if(send(comm_socket, MSG, sizeof(MSG), 0) <0){
+                        perror("error on write");
+                        return EXIT_FAILURE;
+                    }
+                
                 close(comm_socket);
                 exit(EXIT_SUCCESS);
             }

@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     extern int optopt, optind;
     
     if (argc < 3){
-		fprintf(stderr,"%s\n",HELPFILE);
+		fprintf(stdout,"%s\n",HELPFILE);
 		return EXIT_FAILURE;
 	}
     
@@ -106,6 +106,11 @@ int main(int argc, char *argv[])
     
     //printf("%zd,%zd,%zd,%zd,%zd,%zd, argc: %d\n",nflag,uflag,gflag,aflag,hflag,sflag, argc);
     
+    if((lcount == 0) && (ucount == 0)){
+        fprintf(stderr, "No UID or users entered.\n");
+        return EXIT_FAILURE;
+    }
+    
     bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
     if ((int)bufsize == -1)                              /* Value was indeterminate */
         bufsize = 16384;                            /* Should be more than enough */
@@ -161,7 +166,7 @@ int main(int argc, char *argv[])
             s = getpwuid_r(uid[i], &pwd, buf, bufsize, &result);
             if(result == NULL){
                 if (s == 0){
-                    fprintf(stderr,"Chyba: nezname UID %zd\n", (ssize_t)uid[i]);
+                    fprintf(stdout,"Chyba: nezname UID %zd\n", (ssize_t)uid[i]);
                 }
                 else {
                     fprintf(stderr,"Chyba getpwuid_r\n");
