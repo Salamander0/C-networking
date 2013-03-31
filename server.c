@@ -20,13 +20,16 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <netdb.h>
+#include <signal.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/wait.h>
-#include <signal.h>
+
 
 const char *HELPFILE =
 "*\n"
@@ -37,11 +40,11 @@ const char *HELPFILE =
 "* server -p PORT\n"
 "*\n";
 
-void * SigCatcher(int n){
+void SigCatcher(int param){
     int status;
     struct rusage usage;
 	wait3(&status, WNOHANG, &usage);
-}
+}	
 
 int main(int argc, char * argv[])
 {
@@ -51,6 +54,8 @@ int main(int argc, char * argv[])
     struct sockaddr_in6 sa;                         /* socket info about our server */
     struct sockaddr_in6 sa_client;                  /* socket info about client connecting to serv */
     char str[INET6_ADDRSTRLEN];
+    extern int optopt, optind;
+    extern char *optarg;
     
     
     /* command line arguments */

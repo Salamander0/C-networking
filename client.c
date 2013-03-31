@@ -102,6 +102,7 @@ int main (int argc, char **argv)
     char *server, str[20]="", params[100]="", *optstring = "h:p:l:u:LUGNHS", *login[MAX], *next;
     int port=0, c, index;
     extern int optind, optopt;
+    extern char *optarg;
     unsigned int uid[MAX];
     size_t lcount=0, ucount=0, pflag=0, cflag=0;
     

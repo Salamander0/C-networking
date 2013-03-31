@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
             s = getpwnam_r(login[i], &pwd, buf, bufsize, &result);              /* get user data from /etc/passwd */
             if (result == NULL) {
                 if (s == 0){
-                    fprintf(stderr,"Chyba: neznamy login %s\n", login[i]);      /* set correct error code ! */
+                    fprintf(stdout,"Chyba: neznamy login %s\n", login[i]);      /* set correct error code ! */
                 }
                 else {
                     fprintf(stderr,"Chyba getpwnam_r\n");                       /* set correct error code ! */

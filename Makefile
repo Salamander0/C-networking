@@ -2,14 +2,14 @@
 
 SERVER          = server
 CLIENT          = client
-TOOL			= getpwd
+TOOL		 = getpwd
 SERVER_SOURCES  = server.c
 CLIENT_SOURCES  = client.c
-TOOL_SOURCES 	= getpwd.c
+TOOL_SOURCES 	 = getpwd.c
 
 DEFINES         = 
 
-CFLAGS         = -std=c99 -g -pedantic -Wall -Wextra
+CFLAGS         = -std=c99 -g -pedantic -Wall
 
 LIBRARIES       = #-llibrary_name
 
