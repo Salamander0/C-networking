@@ -9,7 +9,7 @@ TOOL_SOURCES 	 = getpwd.c
 
 DEFINES         = 
 
-CFLAGS         = -std=gnu99 -g -pedantic -Wall
+CFLAGS         = -std=gnu99 -g -pedantic -Wall -Werror -Wextra
 
 LIBRARIES       = #-llibrary_name
 
